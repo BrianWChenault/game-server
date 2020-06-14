@@ -15,7 +15,7 @@ Parameters:
 
 Resources:
   GameServerWebSocket:
-    Type: AWS::APIGatewayV2::Api
+    Type: AWS::ApiGatewayV2::Api
     Properties:
       Name: GameServerWebSocket
       ProtocolType: WEBSOCKET
@@ -43,7 +43,7 @@ Resources:
   Deployment:
     Type: AWS::ApiGatewayV2::Deployment
     DependsOn:
-      -ConnectRoute
+      - ConnectRoute
     Properties:
       ApiId: !Ref GameServerWebSocket
   Stage:
@@ -65,7 +65,7 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
-      SSESpecifications:
+      SSESpecification:
         SSEEnabled: True
       TableName: !Ref TableName
   OnConnectFunction:
@@ -92,7 +92,7 @@ Resources:
       Action: lambda.InvokeFunction
       FunctionName: !Ref OnConnectFunction
       Principal: apigateway.amazonaws.com
-Ouputs:
+Outputs:
   ConnectionsTableArn:
     Description: "Connections table ARN"
     Value: !GetAtt ConnectionsTable.Arn
