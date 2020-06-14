@@ -20,83 +20,83 @@ Resources:
       Name: GameServerWebSocket
       ProtocolType: WEBSOCKET
       RouteSelectionExpression: "$request.body.action"
-    ConnectRoute:
-      Type: AWS::ApiGatewayV2::Api
-      Properties:
-        ApiId: !Ref GameServerWebSocket
-        RouteKey: $connect
-        AuthorizationType: NONE
-        OperationName: ConnectRoute
-        Target: !Join
-          - '/'
-          - - 'integration'
-            - !Ref ConnectInteg
-    ConnectInteg:
-      Type: AWS::ApiGatewayV2::Integration
-      Properties:
-        ApiId: !Ref GameServerWebSocket
-        Description: Connect Integration
-        IntegrationType: AWS_PROXY
-        Integration_Uri:
-          Fn::Sub:
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${OnConnectFunction.Arn}/invocations
-    Deployment:
-      Type: AWS::ApiGatewayV2::Deployment
-      DependsOn:
-        -ConnectRoute
-      Properties:
-        ApiId: !Ref GameServerWebSocket
-    Stage:
-      Type: AWS::ApiGatewayV2::Stage
-      Properties:
-        StageName: Prod
-        Description: Prod Stage
-        DeploymentId: !Ref Deployment
-        ApiId: !Ref GameServerWebSocket
-    ConnectionsTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        AttributeDefinitions:
-        - AttributteName: "connectionId"
-          AttributeType: "S"
-        KeySchema:
-        - AttributeName: "connectionId"
-          KeyType: "HASH"
-        ProvisionedThroughput:
-          ReadCapacityUnits: 5
-          WriteCapacityUnits: 5
-        SSESpecifications:
-          SSEEnabled: True
-        TableName: !Ref TableName
-    OnConnectFunction:
-      Type: AWS::Serverless::Function
-      Properties:
-        FunctionName: GameServer_OnConnect
-        Description: Connect websocket to game server
-        CodeUri: target/scala-2.13/game-server.jar
-        Handler: com.bchenault.game_server.OnConnectHandler
-        Runtime: java8
-        MemorySize: 512
-        Timeout: 15
-        Environment:
-          Varibales:
-            TABLE_NAME: !Ref TableName
-        Policies:
-          - DynamoDBCrudPolicy:
-              TableName: !Ref TableName
-    OnConnectPermission:
-      Type: AWS::Lambda::Permission
-      DependsOn:
-        - GameServerWebSocket
-      Properties:
-        Action: lambda.InvokeFunction
-        FunctionName: !Ref OnConnectFunction
-        Principal: apigateway.amazonaws.com
-  Ouputs:
-    ConnectionsTableArn:
-      Description: "Connections table ARN"
-      Value: !GetAtt ConnectionsTable.Arn
+  ConnectRoute:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      ApiId: !Ref GameServerWebSocket
+      RouteKey: $connect
+      AuthorizationType: NONE
+      OperationName: ConnectRoute
+      Target: !Join
+        - '/'
+        - - 'integration'
+          - !Ref ConnectInteg
+  ConnectInteg:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref GameServerWebSocket
+      Description: Connect Integration
+      IntegrationType: AWS_PROXY
+      Integration_Uri:
+        Fn::Sub:
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${OnConnectFunction.Arn}/invocations
+  Deployment:
+    Type: AWS::ApiGatewayV2::Deployment
+    DependsOn:
+      -ConnectRoute
+    Properties:
+      ApiId: !Ref GameServerWebSocket
+  Stage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      StageName: Prod
+      Description: Prod Stage
+      DeploymentId: !Ref Deployment
+      ApiId: !Ref GameServerWebSocket
+  ConnectionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+      - AttributteName: "connectionId"
+        AttributeType: "S"
+      KeySchema:
+      - AttributeName: "connectionId"
+        KeyType: "HASH"
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      SSESpecifications:
+        SSEEnabled: True
+      TableName: !Ref TableName
+  OnConnectFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: GameServer_OnConnect
+      Description: Connect websocket to game server
+      CodeUri: target/scala-2.13/game-server.jar
+      Handler: com.bchenault.game_server.OnConnectHandler
+      Runtime: java8
+      MemorySize: 512
+      Timeout: 15
+      Environment:
+        Varibales:
+          TABLE_NAME: !Ref TableName
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TableName
+  OnConnectPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - GameServerWebSocket
+    Properties:
+      Action: lambda.InvokeFunction
+      FunctionName: !Ref OnConnectFunction
+      Principal: apigateway.amazonaws.com
+Ouputs:
+  ConnectionsTableArn:
+    Description: "Connections table ARN"
+    Value: !GetAtt ConnectionsTable.Arn
 
-    OnConnectFunctionArn:
-      Description: "OnConnect Function ARN"
-      Value: !GetAtt OnConnectFunction.Arn
+  OnConnectFunctionArn:
+    Description: "OnConnect Function ARN"
+    Value: !GetAtt OnConnectFunction.Arn
