@@ -21,7 +21,7 @@ Resources:
       ProtocolType: WEBSOCKET
       RouteSelectionExpression: "$request.body.action"
   ConnectRoute:
-    Type: AWS::ApiGatewayV2::Api
+    Type: AWS::ApiGatewayV2::Route
     Properties:
       ApiId: !Ref GameServerWebSocket
       RouteKey: $connect
@@ -70,7 +70,7 @@ Resources:
       TableName: !Ref TableName
   OnConnectFunction:
     Type: AWS::Serverless::Function
-    Properties:
+    Properties
       FunctionName: GameServer_OnConnect
       Description: Connect websocket to game server
       CodeUri: target/scala-2.13/game-server.jar
