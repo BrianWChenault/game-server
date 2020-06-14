@@ -57,17 +57,17 @@ Resources:
       Type: AWS::DynamoDB::Table
       Properties:
         AttributeDefinitions:
-          - AttributteName: "connectionId"
-            AttributeType: "S"
-          KeySchema:
-          - AttributeName: "connectionId"
-            KeyType: "HASH"
-          ProvisionedThroughput:
-            ReadCapacityUnits: 5
-            WriteCapacityUnits: 5
-          SSESpecifications:
-            SSEEnabled: True
-          TableName: !Ref TableName
+        - AttributteName: "connectionId"
+          AttributeType: "S"
+        KeySchema:
+        - AttributeName: "connectionId"
+          KeyType: "HASH"
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+        SSESpecifications:
+          SSEEnabled: True
+        TableName: !Ref TableName
     OnConnectFunction:
       Type: AWS::Serverless::Function
       Properties:
