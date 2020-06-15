@@ -3,7 +3,7 @@ version = 0.1
 [default.deploy]
 [default.deploy.parameters]
 stack_name = "game-server-stack"
-s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-coa3xt11bmi8"
+s3_bucket = "mouse-dragons-sam"
 s3_prefix = "game-server-stack"
 region = "us-east-2"
 confirm_changeset = true

@@ -29,7 +29,7 @@ Resources:
       OperationName: ConnectRoute
       Target: !Join
         - '/'
-        - - 'integration'
+        - - 'integrations'
           - !Ref ConnectInteg
   ConnectInteg:
     Type: AWS::ApiGatewayV2::Integration
@@ -37,7 +37,7 @@ Resources:
       ApiId: !Ref GameServerWebSocket
       Description: Connect Integration
       IntegrationType: AWS_PROXY
-      Integration_Uri:
+      IntegrationUri:
         Fn::Sub:
           arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${OnConnectFunction.Arn}/invocations
   Deployment:
@@ -57,7 +57,7 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       AttributeDefinitions:
-      - AttributteName: "connectionId"
+      - AttributeName: "connectionId"
         AttributeType: "S"
       KeySchema:
       - AttributeName: "connectionId"
@@ -79,7 +79,7 @@ Resources:
       MemorySize: 512
       Timeout: 15
       Environment:
-        Varibales:
+        Variables:
           TABLE_NAME: !Ref TableName
       Policies:
         - DynamoDBCrudPolicy:
@@ -89,7 +89,7 @@ Resources:
     DependsOn:
       - GameServerWebSocket
     Properties:
-      Action: lambda.InvokeFunction
+      Action: lambda:InvokeFunction
       FunctionName: !Ref OnConnectFunction
       Principal: apigateway.amazonaws.com
 Outputs:
