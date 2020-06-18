@@ -3,8 +3,10 @@ scalaVersion := "2.13.2"
 assemblyJarName in assembly := "game-server.jar"
 
 libraryDependencies ++= Seq(
-  "com.amazonaws" % "aws-lambda-java-events" % "2.2.6",
-  "com.amazonaws" % "aws-lambda-java-core" % "1.2.0"
+  "com.amazonaws" % "aws-lambda-java-events" % "3.1.0",
+  "com.amazonaws" % "aws-lambda-java-core" % "1.2.1",
+  "com.github.seratch" %% "awscala-dynamodb" % "0.8.4",
+  "net.liftweb" %% "lift-json" % "3.4.1"
 )
 
 version := "0.1"

@@ -7,11 +7,33 @@ Description: >-
 Parameters:
   TableName:
     Type: String
-    Default: 'finesse_connections'
+    Default: 'game_connections'
     Description: name of DynamoDB to store existing connections to the game server
     MinLength: 3
     MaxLength: 50
     AllowedPattern: ^[A-Za-z_]+$
+  StageName:
+    Type: String
+    Default: 'Prod'
+    Description: Name of the stage to deploy to
+    MinLength: 3
+    MaxLength: 50
+    AllowedPattern: ^[A-Za-z_]+$
+
+Globals:
+  Function:
+    Runtime: java8
+    MemorySize: 512
+    Timeout: 15
+    CodeUri: build/libs/game-server-0.1.jar
+    Environment:
+      Variables:
+        TABLE_NAME: !Ref TableName
+        STAGE_NAME: !Ref StageName
+        AWS_REGION: 'us-east-2'
+   Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref TableName
 
 Resources:
   GameServerWebSocket:
@@ -31,6 +53,28 @@ Resources:
         - '/'
         - - 'integrations'
           - !Ref ConnectInteg
+  DisconnectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref GameServerWebSocket
+      RouteKey: $disconnect
+      AuthorizationType: NONE
+      OperationName: DisconnectRoute
+      Target: !Join
+        - '/'
+        - - 'integrations'
+          - !Ref DisconnectInteg
+  GameMessageRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref GameServerWebSocket
+      RouteKey: gameMessage
+      AuthorizationType: NONE
+      OperationName: GameMessageRoute
+      Target: !Join
+        - '/'
+        - - 'integrations'
+          - !Ref GameMessageInteg
   ConnectInteg:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
@@ -40,6 +84,24 @@ Resources:
       IntegrationUri:
         Fn::Sub:
           arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${OnConnectFunction.Arn}/invocations
+  DisconnectInteg:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref GameServerWebSocket
+      Description: Disconnect Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub:
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${OnDisconnectFunction.Arn}/invocations
+  GameMessageInteg:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref GameServerWebSocket
+      Description: Game Message Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub:
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GameMessageFunction.Arn}/invocations
   Deployment:
     Type: AWS::ApiGatewayV2::Deployment
     DependsOn:
@@ -49,19 +111,23 @@ Resources:
   Stage:
     Type: AWS::ApiGatewayV2::Stage
     Properties:
-      StageName: Prod
-      Description: Prod Stage
+      StageName: !Ref StageName
+      Description: Stage of deployment
       DeploymentId: !Ref Deployment
       ApiId: !Ref GameServerWebSocket
   ConnectionsTable:
     Type: AWS::DynamoDB::Table
     Properties:
       AttributeDefinitions:
+      - AttributeName: "gameId"
+        AttributeType: "S"
       - AttributeName: "connectionId"
         AttributeType: "S"
       KeySchema:
-      - AttributeName: "connectionId"
+      - AttributeName: "gameId"
         KeyType: "HASH"
+      - AttributeName: "connectionId"
+        KeyType: "RANGE"
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
@@ -73,17 +139,19 @@ Resources:
     Properties:
       FunctionName: GameServer_OnConnect
       Description: Connect websocket to game server
-      CodeUri: target/scala-2.13/game-server.jar
       Handler: com.bchenault.game_server.OnConnectHandler
-      Runtime: java8
-      MemorySize: 512
-      Timeout: 15
-      Environment:
-        Variables:
-          TABLE_NAME: !Ref TableName
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Ref TableName
+  OnDisconnectFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: GameServer_OnDisconnect
+      Description: Disconnect websocket to game server
+      Handler: com.bchenault.game_server.OnDisconnectHandler
+  GameMessageFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: GameServer_GameMessage
+      Description: Handle a message containing game update information
+      Handler: com.bchenault.game_server.GameMessageHandler
   OnConnectPermission:
     Type: AWS::Lambda::Permission
     DependsOn:
@@ -91,6 +159,22 @@ Resources:
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !Ref OnConnectFunction
+      Principal: apigateway.amazonaws.com
+  OnDisconnectPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - GameServerWebSocket
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref OnDisconnectFunction
+      Principal: apigateway.amazonaws.com
+  GameMessagePermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - GameServerWebSocket
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref GameMessageFunction
       Principal: apigateway.amazonaws.com
 Outputs:
   ConnectionsTableArn:
@@ -100,3 +184,11 @@ Outputs:
   OnConnectFunctionArn:
     Description: "OnConnect Function ARN"
     Value: !GetAtt OnConnectFunction.Arn
+
+  OnDisconnectFunctionArn:
+    Description: "OnDisconnect Function ARN"
+    Value: !GetAtt OnDisconnectFunction.Arn
+
+  GameMessageFunctionArn:
+    Description: "GameMessage Function ARN"
+    Value: !GetAtt GameMessageFunction.Arn

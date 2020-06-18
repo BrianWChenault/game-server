@@ -8,5 +8,4 @@ s3_prefix = "game-server-stack"
 region = "us-east-2"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "TableName=\"finesse_connections\""
 
