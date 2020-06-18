@@ -8,9 +8,7 @@ object DynamoDBConnectionFactory {
   val region: String = sys.env.getOrElse("AWS_REGION", "us-east-2")
   def getConnection(): DynamoDB = {
     if (environment == "local") {
-      val client = DynamoDB("", "")(Region(region))
-      client.setEndpoint("http://localhost:8000")
-      client
+      DynamoDB.local()
     } else {
       DynamoDB().at(awscala.Region(region))
     }

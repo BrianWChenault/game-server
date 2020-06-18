@@ -10,20 +10,24 @@ object ApiHandler {
   private val gameConnectionsTable: Option[Table] = db.table(gameConnectionsName)
 
   def onConnectHandler(request: APIGatewayV2WebSocketEvent, context: Context): Response = {
-    val clientConnection = request.getRequestContext.getConnectionId
-    val userConnection = UserConnection.fromJson(request.getBody).copy(connectionId = clientConnection)
-
-    val responseCode = gameConnectionsTable.map { table =>
-      table.put(userConnection.gameId, clientConnection, "userName"->userConnection.userName)
+    println(s"Received Connect Request:\n $request")
+    val userConnection = UserConnection.fromRequest(request)
+    val responseCode = (for {
+      connectionInfo <- userConnection
+      table <- gameConnectionsTable
+    } yield {
+      table.put(connectionInfo.gameId, connectionInfo.connectionId, "userName" -> connectionInfo.userName)
       200
-    }.getOrElse(500)
+    }).getOrElse(500)
+
     Response("connect request received", Map.empty[String, String], responseCode)
   }
 
   def onDisconnectHandler(request: APIGatewayV2WebSocketEvent, context: Context): Response = {
+    println(s"Received Disconnect Request:\n $request")
     val clientConnection = request.getRequestContext.getConnectionId
     val responseCode = gameConnectionsTable.map { table =>
-      val filterCondition = Seq("connectionId" -> cond.eq(clientConnection:_ *))
+      val filterCondition = Seq("connectionId" -> cond.eq(Seq(clientConnection):_ *))
       val connectionsToRemove = table.scan(filterCondition).flatMap(UserConnection.fromItem)
       connectionsToRemove.foreach( deadConnection => table.delete(deadConnection.gameId, deadConnection.connectionId))
       200

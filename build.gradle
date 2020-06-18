@@ -21,14 +21,6 @@ sourceSets {
             srcDirs = []
         }
     }
-    test {
-        scala {
-            srcDirs = ['src/test/scala']
-        }
-        java {
-            srcDirs = []
-        }
-    }
 }
 
 dependencies {
