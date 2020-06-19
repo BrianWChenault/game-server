@@ -4,6 +4,8 @@ import awscala.dynamodbv2.Item
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2WebSocketEvent
 import net.liftweb.json.{DefaultFormats, parse}
 
+import scala.util.Try
+
 case class UserConnection(connectionId: String, gameId: String, userName: String)
 
 object UserConnection {
@@ -21,8 +23,8 @@ object UserConnection {
   def fromRequest(request: APIGatewayV2WebSocketEvent): Option[UserConnection] = {
     val json = parse(request.getBody)
     for {
-      gameId <- (json \ "gameId").extractOpt[String]
-      userName <- (json \ "userName").extractOpt[String]
+      gameId <- Try((json \ "gameId").extract[String]).toOption
+      userName <- Try((json \ "userName").extract[String]).toOption
     } yield {
       UserConnection(
         connectionId = request.getRequestContext.getConnectionId,

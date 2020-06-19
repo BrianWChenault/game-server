@@ -71,6 +71,17 @@ Resources:
         - '/'
         - - 'integrations'
           - !Ref GameMessageInteg
+  JoinGameRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref GameServerWebSocket
+      RouteKey: joinGame
+      AuthorizationType: NONE
+      OperationName: JoinGameRoute
+      Target: !Join
+        - '/'
+        - - 'integrations'
+          - !Ref JoinGameInteg
   ConnectInteg:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
@@ -98,6 +109,15 @@ Resources:
       IntegrationUri:
         Fn::Sub:
           arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GameMessageFunction.Arn}/invocations
+  JoinGameInteg:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref GameServerWebSocket
+      Description: Join Game Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub:
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${JoinGameFunction.Arn}/invocations
   Deployment:
     Type: AWS::ApiGatewayV2::Deployment
     DependsOn:
@@ -157,6 +177,16 @@ Resources:
     Policies:
     - DynamoDBCrudPolicy:
         TableName: !Ref TableName
+  JoinGameFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: GameServer_JoinGame
+      Description: join a game
+      Handler: com.bchenault.game_server.JoinGameHandler
+    Policies:
+      - AmazonDynamoDBFullAccess
+      - DynamoDBCrudPolicy:
+          TableName: !Ref TableName
   OnConnectPermission:
     Type: AWS::Lambda::Permission
     DependsOn:
@@ -181,6 +211,14 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref GameMessageFunction
       Principal: apigateway.amazonaws.com
+  JoinGamePermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - GameServerWebSocket
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref JoinGameFunction
+      Principal: apigateway.amazonaws.com
 Outputs:
   ConnectionsTableArn:
     Description: "Connections table ARN"
@@ -197,3 +235,7 @@ Outputs:
   GameMessageFunctionArn:
     Description: "GameMessage Function ARN"
     Value: !GetAtt GameMessageFunction.Arn
+
+  JoinGameFunctionArn:
+    Description: "JoinGame Function ARN"
+    Value: !GetAtt JoinGameFunction.Arn

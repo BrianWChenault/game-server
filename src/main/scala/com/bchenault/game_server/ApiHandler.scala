@@ -11,16 +11,8 @@ object ApiHandler {
 
   def onConnectHandler(request: APIGatewayV2WebSocketEvent, context: Context): Response = {
     println(s"Received Connect Request:\n $request")
-    val userConnection = UserConnection.fromRequest(request)
-    val responseCode = (for {
-      connectionInfo <- userConnection
-      table <- gameConnectionsTable
-    } yield {
-      table.put(connectionInfo.gameId, connectionInfo.connectionId, "userName" -> connectionInfo.userName)
-      200
-    }).getOrElse(500)
 
-    Response("""{ "msg" : "connect request received" }""", Map.empty[String, String], 200)
+    Response("""{ "response" : "successfully connected" }""", Map.empty[String, String], 200)
   }
 
   def onDisconnectHandler(request: APIGatewayV2WebSocketEvent, context: Context): Response = {
@@ -32,7 +24,21 @@ object ApiHandler {
       connectionsToRemove.foreach( deadConnection => table.delete(deadConnection.gameId, deadConnection.connectionId))
       200
     }.getOrElse(500)
-    Response("disconnect request received", Map.empty[String, String], responseCode)
+    Response("""{ "response" : "successfully disconnected" }""", Map.empty[String, String], responseCode)
+  }
+
+  def joinGameHandler(request: APIGatewayV2WebSocketEvent, context: Context): Response = {
+    println(s"Received join game Request:\n $request")
+    val userConnection = UserConnection.fromRequest(request)
+    val responseCode = (for {
+      connectionInfo <- userConnection
+      table <- gameConnectionsTable
+    } yield {
+      table.put(connectionInfo.gameId, connectionInfo.connectionId, "userName" -> connectionInfo.userName)
+      200
+    }).getOrElse(500)
+
+    Response("""{ "response" : "successfully disconnected" }""", Map.empty[String, String], responseCode)
   }
 
   def gameMessageHandler(request: APIGatewayV2WebSocketEvent, context: Context): Response = {
