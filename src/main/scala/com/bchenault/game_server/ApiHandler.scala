@@ -20,7 +20,7 @@ object ApiHandler {
       200
     }).getOrElse(500)
 
-    Response("connect request received", Map.empty[String, String], responseCode)
+    Response("""{ "msg" : "connect request received" }""", Map.empty[String, String], 200)
   }
 
   def onDisconnectHandler(request: APIGatewayV2WebSocketEvent, context: Context): Response = {

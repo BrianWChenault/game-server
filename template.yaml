@@ -25,15 +25,11 @@ Globals:
     Runtime: java8
     MemorySize: 512
     Timeout: 15
-    CodeUri: build/libs/game-server-0.1.jar
+    CodeUri: build/libs/game-server-all.jar
     Environment:
       Variables:
         TABLE_NAME: !Ref TableName
         STAGE_NAME: !Ref StageName
-        AWS_REGION: 'us-east-2'
-   Policies:
-      - DynamoDBCrudPolicy:
-          TableName: !Ref TableName
 
 Resources:
   GameServerWebSocket:
@@ -140,18 +136,27 @@ Resources:
       FunctionName: GameServer_OnConnect
       Description: Connect websocket to game server
       Handler: com.bchenault.game_server.OnConnectHandler
+    Policies:
+    - DynamoDBCrudPolicy:
+        TableName: !Ref TableName
   OnDisconnectFunction:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: GameServer_OnDisconnect
       Description: Disconnect websocket to game server
       Handler: com.bchenault.game_server.OnDisconnectHandler
+    Policies:
+    - DynamoDBCrudPolicy:
+        TableName: !Ref TableName
   GameMessageFunction:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: GameServer_GameMessage
       Description: Handle a message containing game update information
       Handler: com.bchenault.game_server.GameMessageHandler
+    Policies:
+    - DynamoDBCrudPolicy:
+        TableName: !Ref TableName
   OnConnectPermission:
     Type: AWS::Lambda::Permission
     DependsOn:
